@@ -2,8 +2,24 @@ import torchvision.transforms as tt
 from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import ImageFolder
 import torch
-import numpy as np
+import config
+import matplotlib.pyplot as plt
+from torchvision.utils import make_grid
 
+
+
+def denormalize(images, means, stds):
+    means = torch.tensor(means).reshape(1, 3, 1, 1)
+    stds = torch.tensor(stds).reshape(1, 3, 1, 1)
+    return images * stds + means
+
+def show_batch(dl, stats):
+    for images, labels in dl:
+        fig, ax = plt.subplots(figsize=(12, 12))
+        ax.set_xticks([]); ax.set_yticks([])
+        denorm_images = denormalize(images, *stats)
+        ax.imshow(make_grid(denorm_images[:64], nrow=8).permute(1, 2, 0).clamp(0,1))
+        break
 
 class ImageNormalization:
     """
@@ -22,16 +38,16 @@ class ImageNormalization:
 
     def read_data(self):
         data = ImageFolder(
-            self.test_image_folder,
+            self.train_image_folder,
             transform=tt.Compose(
                 [
-                    tt.Resize(64),
-                    tt.RandomCrop(64),
+                    tt.Resize(config.CROP_SIZE),
+                    tt.RandomCrop(config.CROP_SIZE),
                     tt.ToTensor(),
                 ]
             ),
         )
-        data_dl = DataLoader(data, 64, shuffle=True, num_workers=3, pin_memory=True)
+        data_dl = DataLoader(data, config.CROP_SIZE, shuffle=True, num_workers=3, pin_memory=True)
         stats = self._get_mean_and_std(dataloader=data_dl)
         return data_dl, stats
 
@@ -50,8 +66,8 @@ class ImageNormalization:
         _, stats = self.read_data()
         train_transform = tt.Compose(
             [
-                tt.Resize(64),
-                tt.RandomCrop(64),
+                tt.Resize(config.CROP_SIZE),
+                tt.RandomCrop(config.CROP_SIZE),
                 tt.RandomHorizontalFlip(),
                 tt.ToTensor(),
                 tt.Normalize(*stats, inplace=True),
@@ -59,15 +75,17 @@ class ImageNormalization:
         )
         test_transform = tt.Compose(
             [
-                tt.Resize(64),
-                tt.RandomCrop(64),
+                tt.Resize(config.CROP_SIZE),
+                tt.RandomCrop(config.CROP_SIZE),
                 tt.ToTensor(),
                 tt.Normalize(*stats, inplace=True),
             ]
         )
         train = ImageFolder(self.train_image_folder, transform=train_transform)
         test = ImageFolder(self.test_image_folder, transform=test_transform)
-        return train, test
+        train_dl = DataLoader(train, config.BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
+        test_dl = DataLoader(test, config.BATCH_SIZE * 2, num_workers=2, pin_memory=True)
+        return {"train_dataloader":train_dl, "test_dataloader":test_dl,"train":train,"test":test}
 
     def _get_mean_and_std(self, dataloader):
         sum_, squared_sum, batches = 0, 0, 0
@@ -85,8 +103,8 @@ class ImageNormalization:
 
 if __name__ == "__main__":
     imnorm = ImageNormalization(
-        train_image_folder="../data/intel/seg_train/",
-        test_image_folder="../data/intel/seg_test/",
+        train_image_folder="../data/intel/seg_train/seg_train/",
+        test_image_folder="../data/intel/seg_test/seg_test/",
     )
-    train, test = imnorm.normalize()
-    print(len(train))
+    cache = imnorm.normalize()
+
