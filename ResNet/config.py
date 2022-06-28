@@ -1,9 +1,13 @@
 import torch
 
 
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 CROP_SIZE = 64
-
+EPOCHS = 2
+MAX_LR = 0.01
+GRAD_CLIP = 0.1
+WEIGHT_DECAY = 1e-4
+OPT_FUNC = torch.optim.Adam
 
 def get_default_device():
     """Pick GPU if available, else CPU"""

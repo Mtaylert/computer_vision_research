@@ -84,7 +84,7 @@ class ImageNormalization:
         train = ImageFolder(self.train_image_folder, transform=train_transform)
         test = ImageFolder(self.test_image_folder, transform=test_transform)
         train_dl = DataLoader(train, config.BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
-        test_dl = DataLoader(test, config.BATCH_SIZE * 2, num_workers=2, pin_memory=True)
+        test_dl = DataLoader(test, 1, num_workers=2, pin_memory=True)
         return {"train_dataloader":train_dl, "test_dataloader":test_dl,"train":train,"test":test}
 
     def _get_mean_and_std(self, dataloader):
