@@ -58,7 +58,9 @@ class ImageClassifier():
         ):
             data, target = batch
             output = self.resnet(data)
-            probabilities = torch.exp(output.cpu()).detach.numpy()
+            sm = nn.Softmax(dim=1)
+            probabilities = sm(output)
+            probabilities = probabilities.detach().numpy()
             final_outputs.append(probabilities)
 
         return final_outputs
