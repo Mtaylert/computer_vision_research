@@ -76,4 +76,4 @@ if __name__ == "__main__":
     clf = ImageClassifier()
     clf.fit(train_dl)
     out = clf.predict(cache['test_dataloader'])
-    print(out)
+    print(out[0])
